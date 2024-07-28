@@ -18,7 +18,7 @@ router.get("/", (req, res) => {
   res.json(videoList);
 });
 
-// *** ROUTE: POST /videos ***
+// *** ROUTE: POST /videos *** TO IMPLEMENT!!!
 router.post("/", (req, res) => {
   res.send("You have reached the /video POST endpoint!");
 });
