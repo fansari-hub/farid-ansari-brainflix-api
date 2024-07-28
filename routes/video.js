@@ -20,7 +20,29 @@ router.get("/", (req, res) => {
 
 // *** ROUTE: POST /videos *** TO IMPLEMENT!!!
 router.post("/", (req, res) => {
-  res.send("You have reached the /video POST endpoint!");
+  const postVideoTitle = req.body.title;
+  const postVideoDescription = req.body.description;
+  const postVideoImageName = req.body.imageName;
+
+  if (!postVideoTitle || !postVideoDescription || !postVideoImageName) {
+    res.status(400).send(`POST /videos/:${videoid}/comments - Missing values in post body!`);
+    return;
+  }
+
+  const newVideo = videoData.push({
+    id: uuidv4(),
+    title: postVideoTitle,
+    channel: "TBD",
+    image: postVideoImageName,
+    description: postVideoDescription,
+    views: 0,
+    likes: 0,
+    duration : "99:99",
+    video : "https://unit-3-project-api-0a5620414506.herokuapp.com/stream",
+    timestamp: Date.now(),
+    comments: []
+  });
+  res.json(videoData[newVideo-1]);
 });
 
 // *** ROUTE: GET /videos/:id ***
