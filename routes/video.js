@@ -2,7 +2,7 @@ const express = require("express");
 const videoData = require("../data/videos.json");
 const router = express.Router();
 const { v4: uuidv4 } = require("uuid");
-const imagesPath = "http://localhost:8080/public/images/";
+const imagesPath = "http://localhost:8080/images/";
 const errorMsgID = "not found, please verify ID for";
 
 // *** ROUTE: GET /videos ***
@@ -23,8 +23,9 @@ router.post("/", (req, res) => {
   const postVideoTitle = req.body.title;
   const postVideoDescription = req.body.description;
   const postVideoImageName = req.body.imageName;
+  const postVideoChannel = req.body.userName;
 
-  if (!postVideoTitle || !postVideoDescription || !postVideoImageName) {
+  if (!postVideoTitle || !postVideoDescription || !postVideoImageName || !postVideoChannel) {
     res.status(400).send(`POST /videos/:${videoid}/comments - Missing values in post body!`);
     return;
   }
@@ -32,7 +33,7 @@ router.post("/", (req, res) => {
   const newVideo = videoData.push({
     id: uuidv4(),
     title: postVideoTitle,
-    channel: "TBD",
+    channel: postVideoChannel,
     image: postVideoImageName,
     description: postVideoDescription,
     views: 0,
