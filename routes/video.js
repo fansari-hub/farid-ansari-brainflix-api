@@ -18,7 +18,7 @@ router.get("/", (req, res) => {
   res.json(videoList);
 });
 
-// *** ROUTE: POST /videos *** TO IMPLEMENT!!!
+// *** ROUTE: POST /videos ***
 router.post("/", (req, res) => {
   const postVideoTitle = req.body.title;
   const postVideoDescription = req.body.description;
@@ -42,7 +42,7 @@ router.post("/", (req, res) => {
     timestamp: Date.now(),
     comments: []
   });
-  res.json(videoData[newVideo-1]);
+  res.status(201).json(videoData[newVideo-1]);
 });
 
 // *** ROUTE: GET /videos/:id ***
