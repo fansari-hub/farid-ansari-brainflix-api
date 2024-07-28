@@ -29,7 +29,7 @@ router.get("/:id", (req, res) => {
   const videoIndex = videoData.findIndex((o) => o.id === videoid);
 
   if (videoIndex === -1) {
-    res.status(403).send(`GET /videos/:${videoid} - ${errorMsgID} video.`);
+    res.status(404).send(`GET /videos/:${videoid} - ${errorMsgID} video.`);
     return;
   }
 
@@ -44,7 +44,7 @@ router.put("/:id/likes", (req, res) => {
   const videoIndex = videoData.findIndex((o) => o.id === videoid);
 
   if (videoIndex === -1) {
-    res.status(403).send(`PUT /videos/:${videoid}/likes - ${errorMsgID} video.`);
+    res.status(404).send(`PUT /videos/:${videoid}/likes - ${errorMsgID} video.`);
     return;
   }
   videoData[videoIndex].likes++;
@@ -57,7 +57,7 @@ router.post("/:id/comments", (req, res) => {
   const videoIndex = videoData.findIndex((o) => o.id === videoid);
 
   if (videoIndex === -1) {
-    res.status(403).send(`POST /videos/:${videoid}/comments - ${errorMsgID} video.`);
+    res.status(404).send(`POST /videos/:${videoid}/comments - ${errorMsgID} video.`);
     return;
   }
 
@@ -65,7 +65,7 @@ router.post("/:id/comments", (req, res) => {
   const postName = req.body.name;
 
   if (!postComment || !postName) {
-    res.status(403).send(`POST /videos/:${videoid}/comments - Missing values in post body!`);
+    res.status(400).send(`POST /videos/:${videoid}/comments - Missing values in post body!`);
     return;
   }
   const newComment = videoData[videoIndex].comments.push({
@@ -75,7 +75,7 @@ router.post("/:id/comments", (req, res) => {
     likes: 0,
     timestamp: Date.now(),
   });
-  res.json(videoData[videoIndex].comments[newComment - 1]);
+  res.status(201).json(videoData[videoIndex].comments[newComment - 1]);
 });
 
 // *** ROUTE: DELETE /videos/:id/comments/:commentid ***
@@ -85,13 +85,13 @@ router.delete("/:id/comments/:commentid", (req, res) => {
   const videoIndex = videoData.findIndex((o) => o.id === videoid);
 
   if (videoIndex === -1) {
-    res.status(403).send(`DELETE /videos/:${videoid}/comments/${commentid} - ${errorMsgID} video.`);
+    res.status(404).send(`DELETE /videos/:${videoid}/comments/${commentid} - ${errorMsgID} video.`);
     return;
   }
 
   const commentIndex = videoData[videoIndex].comments.findIndex((o) => o.id === commentid);
   if (commentIndex === -1) {
-    res.status(403).send(`DELETE /videos/:${videoid}/comments/${commentid} - ${errorMsgID} comment.`);
+    res.status(404).send(`DELETE /videos/:${videoid}/comments/${commentid} - ${errorMsgID} comment.`);
     return;
   }
   res.json(videoData[videoIndex].comments[commentIndex]);
