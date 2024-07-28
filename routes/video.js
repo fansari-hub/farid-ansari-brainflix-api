@@ -6,7 +6,7 @@ const imagesPath = "http://localhost:8080/public/images/";
 const errorMsgID = "not found, please verify ID for";
 
 // *** ROUTE: GET /videos ***
-router.get("/", (req, res) => {
+router.get("/", (_req, res) => {
   const videoList = videoData.map((i) => {
     return {
       id: i.id,
