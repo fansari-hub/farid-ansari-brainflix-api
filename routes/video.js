@@ -1,10 +1,28 @@
+/* NOTE: 
+To reset server data to original state, shutdown server & delete ./data/videos-livedata.json. 
+ The file will be recreated on the next load. 
+*/
+
 const express = require("express");
-const videoData = require("../data/videos.json");
+const fs = require("fs");
 const router = express.Router();
 const { v4: uuidv4 } = require("uuid");
 const imagesPath = "http://localhost:8080/images/";
 const errorMsgID = "not found, please verify ID for";
 const multer = require("multer");
+const STORGE_FILE = "./data/videos-livedata.json";
+const INIT_FILE = "./data/videos.json";
+let videoData;
+
+// ** Middleware to automatically save server data on any non-GET REQUEST
+router.use((req, res, next) => {
+  next();
+  if (req.method === "POST" || req.method === "PUT" || req.method === "DELETE") {
+    console.log(`Data state altered via request method: ${req.method} with status code ${req.res.statusCode}`);
+    saveServerData();
+  }
+});
+// ****************************************************
 
 // ** Custom Multer setup to support image file uploading
 const multerStorage = multer.diskStorage({
@@ -18,6 +36,28 @@ const multerStorage = multer.diskStorage({
 });
 
 const upload = multer({ storage: multerStorage });
+// ****************************************************
+
+// ******** DATA FILE SETUP & INIT ********
+if (fs.existsSync(STORGE_FILE)) {
+  console.log("Existing livedData storage file found, loading data...");
+  videoData = JSON.parse(fs.readFileSync(STORGE_FILE));
+  console.log("Data load complete.");
+} else {
+  console.log("Live data storage file not found, intializing data ....");
+  const initialData = JSON.parse(fs.readFileSync(INIT_FILE));
+  fs.writeFileSync(STORGE_FILE, JSON.stringify(initialData));
+  videoData = JSON.parse(fs.readFileSync(STORGE_FILE));
+  console.log("Data initialization complete.");
+}
+// ****************************************************
+
+// ******** SAVE SERVER DATA STATE TO FILE ********
+function saveServerData() {
+  console.log("Saving server data state to file...");
+  fs.writeFileSync(STORGE_FILE, JSON.stringify(videoData));
+  console.log("Data saved.");
+}
 // ****************************************************
 
 // *** ROUTE: GET /videos ***
@@ -82,7 +122,6 @@ router.get("/:id", (req, res) => {
   const videoDetail = { ...videoData[videoIndex] };
   videoDetail.image = imagesPath + videoDetail.image;
   res.json(videoDetail);
-  console.log(videoDetail.image);
 });
 // ****************************************************
 
