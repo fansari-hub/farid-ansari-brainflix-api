@@ -4,6 +4,21 @@ const router = express.Router();
 const { v4: uuidv4 } = require("uuid");
 const imagesPath = "http://localhost:8080/images/";
 const errorMsgID = "not found, please verify ID for";
+const multer = require("multer");
+
+// ** Custom Multer setup to support image file uploading
+const multerStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "public/images");
+  },
+  filename: function (req, file, cb) {
+    const filePrefix = Math.round(Math.random() * 1e9);
+    cb(null, filePrefix + "-" + file.originalname);
+  },
+});
+
+const upload = multer({ storage: multerStorage });
+// ****************************************************
 
 // *** ROUTE: GET /videos ***
 router.get("/", (_req, res) => {
@@ -17,34 +32,42 @@ router.get("/", (_req, res) => {
   });
   res.json(videoList);
 });
+// ****************************************************
 
 // *** ROUTE: POST /videos ***
-router.post("/", (req, res) => {
+router.post("/", upload.single("imageFile"), (req, res) => {
   const postVideoTitle = req.body.title;
   const postVideoDescription = req.body.description;
-  const postVideoImageName = req.body.imageName;
   const postVideoChannel = req.body.userName;
+  let imageFileName = "";
 
-  if (!postVideoTitle || !postVideoDescription || !postVideoImageName || !postVideoChannel) {
+  if (!postVideoTitle || !postVideoDescription || !postVideoChannel) {
     res.status(400).send(`POST /videos/:${videoid}/comments - Missing values in post body!`);
     return;
+  }
+  console.log(req.file);
+  if (req.file) {
+    imageFileName = req.file.filename;
+  } else {
+    imageFileName = "Upload-video-preview.jpg";
   }
 
   const newVideo = videoData.push({
     id: uuidv4(),
     title: postVideoTitle,
     channel: postVideoChannel,
-    image: postVideoImageName,
+    image: imageFileName,
     description: postVideoDescription,
     views: 0,
     likes: 0,
-    duration : "99:99",
-    video : "https://unit-3-project-api-0a5620414506.herokuapp.com/stream",
+    duration: "99:99",
+    video: "https://unit-3-project-api-0a5620414506.herokuapp.com/stream",
     timestamp: Date.now(),
-    comments: []
+    comments: [],
   });
-  res.status(201).json(videoData[newVideo-1]);
+  res.status(201).json(videoData[newVideo - 1]);
 });
+// ****************************************************
 
 // *** ROUTE: GET /videos/:id ***
 router.get("/:id", (req, res) => {
@@ -59,7 +82,9 @@ router.get("/:id", (req, res) => {
   const videoDetail = { ...videoData[videoIndex] };
   videoDetail.image = imagesPath + videoDetail.image;
   res.json(videoDetail);
+  console.log(videoDetail.image);
 });
+// ****************************************************
 
 // *** ROUTE: PUT /videos/:id/likes ***
 router.put("/:id/likes", (req, res) => {
@@ -73,6 +98,7 @@ router.put("/:id/likes", (req, res) => {
   videoData[videoIndex].likes++;
   res.send(`Success: You liked video ${videoid}, new like count ${videoData[videoIndex].likes}`);
 });
+// ****************************************************
 
 // *** ROUTE: POST /videos/:id/comments ***
 router.post("/:id/comments", (req, res) => {
@@ -100,6 +126,7 @@ router.post("/:id/comments", (req, res) => {
   });
   res.status(201).json(videoData[videoIndex].comments[newComment - 1]);
 });
+// ****************************************************
 
 // *** ROUTE: DELETE /videos/:id/comments/:commentid ***
 router.delete("/:id/comments/:commentid", (req, res) => {
@@ -120,5 +147,6 @@ router.delete("/:id/comments/:commentid", (req, res) => {
   res.json(videoData[videoIndex].comments[commentIndex]);
   videoData[videoIndex].comments.splice(commentIndex, 1);
 });
+// ****************************************************
 
 module.exports = router;
