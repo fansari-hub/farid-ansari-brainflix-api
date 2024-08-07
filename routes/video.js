@@ -8,8 +8,10 @@ const fs = require("fs");
 const router = express.Router();
 const { v4: uuidv4 } = require("uuid");
 const imagesPath = "http://localhost:8080/images/";
+const videosPath = "http://localhost:8080/videos/";
 const errorMsgID = "not found, please verify ID for";
 const multer = require("multer");
+const MOCK_VIDEO = 'BrainStationSampleVideo.mp4'
 const STORGE_FILE = "./data/videos-livedata.json";
 const INIT_FILE = "./data/videos.json";
 let videoData;
@@ -102,7 +104,7 @@ router.post("/", upload.single("imageFile"), (req, res) => {
     views: 0,
     likes: 0,
     duration: "99:99",
-    video: "https://unit-3-project-api-0a5620414506.herokuapp.com/stream",
+    video: "",
     timestamp: Date.now(),
     comments: [],
   });
@@ -122,6 +124,7 @@ router.get("/:id", (req, res) => {
 
   const videoDetail = { ...videoData[videoIndex] };
   videoDetail.image = imagesPath + videoDetail.image;
+  videoDetail.video = videosPath + MOCK_VIDEO;
   res.json(videoDetail);
 });
 // ****************************************************
