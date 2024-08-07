@@ -21,3 +21,8 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+
+#server run-time data
+data/videos-livedata.json
+public/images/userData*

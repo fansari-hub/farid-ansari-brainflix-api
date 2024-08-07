@@ -30,8 +30,9 @@ const multerStorage = multer.diskStorage({
     cb(null, "public/images");
   },
   filename: function (req, file, cb) {
-    const filePrefix = Math.round(Math.random() * 1e9);
-    cb(null, filePrefix + "-" + file.originalname);
+    const filePrefix = "userData" + "_" + Math.round(Math.random() * 1e9);
+    const fileExt = file.originalname.split(".");
+    cb(null, filePrefix + "." + fileExt[fileExt.length - 1]);
   },
 });
 
@@ -85,9 +86,9 @@ router.post("/", upload.single("imageFile"), (req, res) => {
     res.status(400).send(`POST /videos/:${videoid}/comments - Missing values in post body!`);
     return;
   }
-  console.log(req.file);
   if (req.file) {
     imageFileName = req.file.filename;
+    console.log(`User image upload: ${req.file.filename}`)
   } else {
     imageFileName = "Upload-video-preview.jpg";
   }
