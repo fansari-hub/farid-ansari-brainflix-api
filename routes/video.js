@@ -7,53 +7,62 @@ const express = require("express");
 const fs = require("fs");
 const router = express.Router();
 const { v4: uuidv4 } = require("uuid");
-const imagesPath = "http://localhost:8080/images/";
-const videosPath = "http://localhost:8080/videos/";
-const errorMsgID = "not found, please verify ID for";
 const multer = require("multer");
-const MOCK_VIDEO = 'BrainStationSampleVideo.mp4'
+
+const IMAGE_PATH = "http://localhost:8080/images/";
+const VIDEO_PATH = "http://localhost:8080/videos/";
+const TXT_ERRORID = "not found, please verify ID for";
+const MOCK_VIDEO = "BrainStationSampleVideo.mp4";
 const STORGE_FILE = "./data/videos-livedata.json";
 const INIT_FILE = "./data/videos.json";
-let videoData;
 
-// ** Middleware to automatically save server data on any non-GET REQUEST
-router.use((req, res, next) => {
-  next();
-  if (req.method === "POST" || req.method === "PUT" || req.method === "DELETE") {
-    console.log(`Data state altered via request method: ${req.method} with status code ${req.res.statusCode}`);
-    saveServerData();
-  }
-});
-// ****************************************************
+// ********** START MAIN ***********
+initMiddlewares();
+const upload = initMulter();
+const videoData = initDataFile();
 
-// ** Custom Multer setup to support image file uploading
-const multerStorage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "public/images");
-  },
-  filename: function (req, file, cb) {
-    const filePrefix = "userData" + "_" + Math.round(Math.random() * 1e9);
-    const fileExt = file.originalname.split(".");
-    cb(null, filePrefix + "." + fileExt[fileExt.length - 1]);
-  },
-});
+// *** Middleware to automatically save server data on any non-GET REQUEST ***
+function initMiddlewares() {
+  router.use((req, res, next) => {
+    next();
+    if (req.method === "POST" || req.method === "PUT" || req.method === "DELETE") {
+      console.log(`Data state altered via request method: ${req.method} with status code ${req.res.statusCode}`);
+      saveServerData();
+    }
+  });
+}
 
-const upload = multer({ storage: multerStorage });
-// ****************************************************
+// *** Custom Multer setup to support image file uploading ***
+function initMulter() {
+  const multerStorage = multer.diskStorage({
+    destination: function (req, file, cb) {
+      cb(null, "public/images");
+    },
+    filename: function (req, file, cb) {
+      const filePrefix = "userData" + "_" + Math.round(Math.random() * 1e9);
+      const fileExt = file.originalname.split(".");
+      cb(null, filePrefix + "." + fileExt[fileExt.length - 1]);
+    },
+  });
+  return multer({ storage: multerStorage });
+}
 
 // ******** DATA FILE SETUP & INIT ********
-if (fs.existsSync(STORGE_FILE)) {
-  console.log("Existing livedData storage file found, loading data...");
-  videoData = JSON.parse(fs.readFileSync(STORGE_FILE));
-  console.log("Data load complete.");
-} else {
-  console.log("Live data storage file not found, intializing data ....");
-  const initialData = JSON.parse(fs.readFileSync(INIT_FILE));
-  fs.writeFileSync(STORGE_FILE, JSON.stringify(initialData));
-  videoData = JSON.parse(fs.readFileSync(STORGE_FILE));
-  console.log("Data initialization complete.");
+function initDataFile() {
+  if (fs.existsSync(STORGE_FILE)) {
+    console.log("Existing livedData storage file found, loading data...");
+    let data = JSON.parse(fs.readFileSync(STORGE_FILE));
+    console.log("Data load complete.");
+    return data;
+  } else {
+    console.log("Live data storage file not found, intializing data ....");
+    const initialData = JSON.parse(fs.readFileSync(INIT_FILE));
+    fs.writeFileSync(STORGE_FILE, JSON.stringify(initialData));
+    let data = JSON.parse(fs.readFileSync(STORGE_FILE));
+    console.log("Data initialization complete.");
+    return data;
+  }
 }
-// ****************************************************
 
 // ******** SAVE SERVER DATA STATE TO FILE ********
 function saveServerData() {
@@ -61,7 +70,6 @@ function saveServerData() {
   fs.writeFileSync(STORGE_FILE, JSON.stringify(videoData));
   console.log("Data saved.");
 }
-// ****************************************************
 
 // *** ROUTE: GET /videos ***
 router.get("/", (_req, res) => {
@@ -70,12 +78,11 @@ router.get("/", (_req, res) => {
       id: i.id,
       title: i.title,
       channel: i.channel,
-      image: imagesPath + i.image,
+      image: IMAGE_PATH + i.image,
     };
   });
   res.json(videoList);
 });
-// ****************************************************
 
 // *** ROUTE: POST /videos ***
 router.post("/", upload.single("imageFile"), (req, res) => {
@@ -90,7 +97,7 @@ router.post("/", upload.single("imageFile"), (req, res) => {
   }
   if (req.file) {
     imageFileName = req.file.filename;
-    console.log(`User image upload: ${req.file.filename}`)
+    console.log(`User image upload: ${req.file.filename}`);
   } else {
     imageFileName = "Upload-video-preview.jpg";
   }
@@ -110,7 +117,6 @@ router.post("/", upload.single("imageFile"), (req, res) => {
   });
   res.status(201).json(videoData[newVideo - 1]);
 });
-// ****************************************************
 
 // *** ROUTE: GET /videos/:id ***
 router.get("/:id", (req, res) => {
@@ -118,16 +124,15 @@ router.get("/:id", (req, res) => {
   const videoIndex = videoData.findIndex((o) => o.id === videoid);
 
   if (videoIndex === -1) {
-    res.status(404).send(`GET /videos/:${videoid} - ${errorMsgID} video.`);
+    res.status(404).send(`GET /videos/:${videoid} - ${TXT_ERRORID} video.`);
     return;
   }
 
   const videoDetail = { ...videoData[videoIndex] };
-  videoDetail.image = imagesPath + videoDetail.image;
-  videoDetail.video = videosPath + MOCK_VIDEO;
+  videoDetail.image = IMAGE_PATH + videoDetail.image;
+  videoDetail.video = VIDEO_PATH + MOCK_VIDEO;
   res.json(videoDetail);
 });
-// ****************************************************
 
 // *** ROUTE: PUT /videos/:id/likes ***
 router.put("/:id/likes", (req, res) => {
@@ -135,13 +140,12 @@ router.put("/:id/likes", (req, res) => {
   const videoIndex = videoData.findIndex((o) => o.id === videoid);
 
   if (videoIndex === -1) {
-    res.status(404).send(`PUT /videos/:${videoid}/likes - ${errorMsgID} video.`);
+    res.status(404).send(`PUT /videos/:${videoid}/likes - ${TXT_ERRORID} video.`);
     return;
   }
   videoData[videoIndex].likes++;
   res.send(`Success: You liked video ${videoid}, new like count ${videoData[videoIndex].likes}`);
 });
-// ****************************************************
 
 // *** ROUTE: POST /videos/:id/comments ***
 router.post("/:id/comments", (req, res) => {
@@ -149,7 +153,7 @@ router.post("/:id/comments", (req, res) => {
   const videoIndex = videoData.findIndex((o) => o.id === videoid);
 
   if (videoIndex === -1) {
-    res.status(404).send(`POST /videos/:${videoid}/comments - ${errorMsgID} video.`);
+    res.status(404).send(`POST /videos/:${videoid}/comments - ${TXT_ERRORID} video.`);
     return;
   }
 
@@ -169,7 +173,6 @@ router.post("/:id/comments", (req, res) => {
   });
   res.status(201).json(videoData[videoIndex].comments[newComment - 1]);
 });
-// ****************************************************
 
 // *** ROUTE: DELETE /videos/:id/comments/:commentid ***
 router.delete("/:id/comments/:commentid", (req, res) => {
@@ -178,18 +181,17 @@ router.delete("/:id/comments/:commentid", (req, res) => {
   const videoIndex = videoData.findIndex((o) => o.id === videoid);
 
   if (videoIndex === -1) {
-    res.status(404).send(`DELETE /videos/:${videoid}/comments/${commentid} - ${errorMsgID} video.`);
+    res.status(404).send(`DELETE /videos/:${videoid}/comments/${commentid} - ${TXT_ERRORID} video.`);
     return;
   }
 
   const commentIndex = videoData[videoIndex].comments.findIndex((o) => o.id === commentid);
   if (commentIndex === -1) {
-    res.status(404).send(`DELETE /videos/:${videoid}/comments/${commentid} - ${errorMsgID} comment.`);
+    res.status(404).send(`DELETE /videos/:${videoid}/comments/${commentid} - ${TXT_ERRORID} comment.`);
     return;
   }
   res.json(videoData[videoIndex].comments[commentIndex]);
   videoData[videoIndex].comments.splice(commentIndex, 1);
 });
-// ****************************************************
 
 module.exports = router;
