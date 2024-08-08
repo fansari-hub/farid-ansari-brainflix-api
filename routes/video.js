@@ -15,30 +15,29 @@ const TXT_ERRORID = "not found, please verify ID for";
 const MOCK_VIDEO = "BrainStationSampleVideo.mp4";
 const STORGE_FILE = "./data/videos-livedata.json";
 const INIT_FILE = "./data/videos.json";
+const DEFAULT_VIDEO_THUMB = "Upload-video-preview.jpg";
 
 // ********** START MAIN ***********
-initMiddlewares();
 const upload = initMulter();
 const videoData = initDataFile();
 
-// *** Middleware to automatically save server data on any non-GET REQUEST ***
-function initMiddlewares() {
-  router.use((req, res, next) => {
+
+  // *** Middleware to automatically save server data on any non-GET REQUEST ***
+  router.use((req, _res, next) => {
     next();
     if (req.method === "POST" || req.method === "PUT" || req.method === "DELETE") {
       console.log(`Data state altered via request method: ${req.method} with status code ${req.res.statusCode}`);
       saveServerData();
     }
   });
-}
 
 // *** Custom Multer setup to support image file uploading ***
 function initMulter() {
   const multerStorage = multer.diskStorage({
-    destination: function (req, file, cb) {
+    destination: function (_req, _file, cb) {
       cb(null, "public/images");
     },
-    filename: function (req, file, cb) {
+    filename: function (_req, file, cb) {
       const filePrefix = "userData" + "_" + Math.round(Math.random() * 1e9);
       const fileExt = file.originalname.split(".");
       cb(null, filePrefix + "." + fileExt[fileExt.length - 1]);
@@ -51,14 +50,14 @@ function initMulter() {
 function initDataFile() {
   if (fs.existsSync(STORGE_FILE)) {
     console.log("Existing livedData storage file found, loading data...");
-    let data = JSON.parse(fs.readFileSync(STORGE_FILE));
+    const data = JSON.parse(fs.readFileSync(STORGE_FILE));
     console.log("Data load complete.");
     return data;
   } else {
     console.log("Live data storage file not found, intializing data ....");
     const initialData = JSON.parse(fs.readFileSync(INIT_FILE));
     fs.writeFileSync(STORGE_FILE, JSON.stringify(initialData));
-    let data = JSON.parse(fs.readFileSync(STORGE_FILE));
+    const data = JSON.parse(fs.readFileSync(STORGE_FILE));
     console.log("Data initialization complete.");
     return data;
   }
@@ -99,7 +98,7 @@ router.post("/", upload.single("imageFile"), (req, res) => {
     imageFileName = req.file.filename;
     console.log(`User image upload: ${req.file.filename}`);
   } else {
-    imageFileName = "Upload-video-preview.jpg";
+    imageFileName = DEFAULT_VIDEO_THUMB;
   }
 
   const newVideo = videoData.push({
