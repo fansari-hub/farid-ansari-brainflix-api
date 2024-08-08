@@ -26,8 +26,11 @@ const videoData = initDataFile();
   router.use((req, _res, next) => {
     next();
     if (req.method === "POST" || req.method === "PUT" || req.method === "DELETE") {
-      console.log(`Data state altered via request method: ${req.method} with status code ${req.res.statusCode}`);
+      console.log(`Data state altered via request METHOD: ${req.method} | ENDPOINT: ${req.originalUrl} | CODE: ${req.res.statusCode}`);
       saveServerData();
+    }
+    if (req.method === 'GET'){
+      console.log(`Data requested via METHOD: ${req.method} | ENDPOINT: ${req.originalUrl} | CODE: ${req.res.statusCode}`);
     }
   });
 
