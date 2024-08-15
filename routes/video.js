@@ -1,5 +1,6 @@
 /* NOTE: 
-To reset server data to original state, shutdown server & delete ./data/videos-livedata.json. 
+To reset server data to original state, shutdown server & delete ./data/videos-livedata.json.
+You may also delete user uploaded images by deleting userData* files in the images folder. 
  The file will be recreated on the next load. 
 */
 
@@ -16,23 +17,24 @@ const MOCK_VIDEO = "BrainStationSampleVideo.mp4";
 const STORGE_FILE = "./data/videos-livedata.json";
 const INIT_FILE = "./data/videos.json";
 const DEFAULT_VIDEO_THUMB = "Upload-video-preview.jpg";
+const SERVER_LOGGING = true; //set true to enable live logging of API into the console
 
 // ********** START MAIN ***********
 const upload = initMulter();
 const videoData = initDataFile();
 
-
-  // *** Middleware to automatically save server data on any non-GET REQUEST ***
-  router.use((req, _res, next) => {
-    next();
+// *** Middleware to automatically save server data on any non-GET REQUEST ***
+router.use((req, _res, next) => {
+  next();
+  if (SERVER_LOGGING) {
     if (req.method === "POST" || req.method === "PUT" || req.method === "DELETE") {
       console.log(`Data state altered via request METHOD: ${req.method} | ENDPOINT: ${req.originalUrl} | CODE: ${req.res.statusCode}`);
-      saveServerData();
     }
-    if (req.method === 'GET'){
+    if (req.method === "GET" && SERVER_LOGGING) {
       console.log(`Data requested via METHOD: ${req.method} | ENDPOINT: ${req.originalUrl} | CODE: ${req.res.statusCode}`);
     }
-  });
+  }
+});
 
 // *** Custom Multer setup to support image file uploading ***
 function initMulter() {
@@ -55,6 +57,7 @@ function initDataFile() {
     console.log("Existing livedData storage file found, loading data...");
     const data = JSON.parse(fs.readFileSync(STORGE_FILE));
     console.log("Data load complete.");
+    console.log("To reset to original shipped server data state, stop server and delete video-livedata.json in data folder AND userData* files in images folder, then restart server.");
     return data;
   } else {
     console.log("Live data storage file not found, intializing data ....");
@@ -118,6 +121,7 @@ router.post("/", upload.single("imageFile"), (req, res) => {
     comments: [],
   });
   res.status(201).json(videoData[newVideo - 1]);
+  saveServerData();
 });
 
 // *** ROUTE: GET /videos/:id ***
@@ -147,6 +151,7 @@ router.put("/:id/likes", (req, res) => {
   }
   videoData[videoIndex].likes++;
   res.send(`Success: You liked video ${videoid}, new like count ${videoData[videoIndex].likes}`);
+  saveServerData();
 });
 
 // *** ROUTE: POST /videos/:id/comments ***
@@ -174,6 +179,7 @@ router.post("/:id/comments", (req, res) => {
     timestamp: Date.now(),
   });
   res.status(201).json(videoData[videoIndex].comments[newComment - 1]);
+  saveServerData();
 });
 
 // *** ROUTE: DELETE /videos/:id/comments/:commentid ***
@@ -194,6 +200,7 @@ router.delete("/:id/comments/:commentid", (req, res) => {
   }
   res.json(videoData[videoIndex].comments[commentIndex]);
   videoData[videoIndex].comments.splice(commentIndex, 1);
+  saveServerData();
 });
 
 module.exports = router;
